@@ -52,6 +52,25 @@
     build: {
       target: 'esnext',
       outDir: 'build',
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (id.includes('node_modules')) {
+              const parts = id.split('node_modules/')[1];
+              if (!parts) return 'vendor';
+              // Handle scoped packages like @radix-ui/react-*
+              if (parts.startsWith('@')) {
+                const scope = parts.split('/').slice(0, 2).join('__').replace('@', 'at-');
+                return `vendor_${scope}`;
+              }
+              const pkg = parts.split('/')[0].replace(/[^a-zA-Z0-9_]/g, '_');
+              if (['react', 'react-dom'].includes(pkg)) return 'vendor_react';
+              return `vendor_${pkg}`;
+            }
+            return undefined;
+          },
+        },
+      },
     },
     server: {
       port: 3000,
